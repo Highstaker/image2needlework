@@ -1,6 +1,6 @@
 CC = g++
 INCLUDES = -I/usr/include/freetype2
-LIBRARIES = -lfreetype -lz
+LIBRARIES = -lfreetype -lz -pthread
 SOURCE = $(wildcard *.cpp)
 DEST = $(patsubst %.cpp,%,$(SOURCE))
 
