@@ -7,17 +7,53 @@ using namespace std;
 //////////////////
 
 int line_width = 1;
-int cell_size = 20;
+int cell_size = 10;
+short thread_amount = 1;
 
 
 int main(int argc, char **argv)
 {
-	string filename = argv[1];
+	string filename ;
+string out_filename = "out_needlework.tga";
+	
+	for(int i=0;i<argc ;i++)//reading options
+	{
+		
+		if((string)argv[i] == "-i")
+		{
+			filename = argv[i+1];
+			//cerr << "filename "<< filename << endl; return 1;//debug
+		}
+
+		if((string)argv[i] == "-o")
+		{
+			out_filename = argv[i+1];
+			//cerr << "filename "<< filename << endl; return 1;//debug
+		}
+		
+		if((string)argv[i] == "--cell-size")
+		{
+			cell_size = atoi(argv[i + 1]);
+		}
+
+		if((string)argv[i] == "--border-thickness")
+		{
+			line_width = atoi(argv[i + 1]);
+		}
+
+		if((string)argv[i] == "--render-threads")
+		{
+			thread_amount = atoi(argv[i + 1]);
+		}
+
+	}//end options reading
 
 	TGAImage *in_image = new TGAImage(filename);
 
 	int n_cells_x = in_image -> m_width;
 	int n_cells_y = in_image -> m_height;
+
+	cerr << "Width: " << in_image -> m_width  << "\t" << "Height: " << in_image -> m_height << endl;//debug
 
 	if(in_image -> image_type != IMAGE_PALETTE)
 	{
@@ -49,10 +85,11 @@ int main(int argc, char **argv)
 			out_image -> setPixel(c,i,j);
 		}//if
 		else
-		{						
-			out_image -> setPixel(in_image -> getPixel(i/e,j/e),i,j);
+		{			
+			c = in_image -> getPixel(i/e,j/e)	;
+			out_image -> setPixel(c,i,j);
 		}//else
-
+			//cerr << i << "\t" << j << "\t" << (int)c.r << "\t" << (int)c.g << "\t" << (int)c.b << endl;//debug
 	}//for
 	cerr << "Mile1" << endl;//debug
 	//c.r = 0; c.g = 255; c.b = 0; out_image -> drawSquare(c,0,0,4000,4000);//test
@@ -80,7 +117,7 @@ int main(int argc, char **argv)
 			}
 			else 
 			{
-			c.r = 255; c.g = 255; c.b = 255;
+				c.r = 255; c.g = 255; c.b = 255;
 			}
 
 			for(int i=0;i<symbols.rows;i++)
@@ -96,7 +133,7 @@ int main(int argc, char **argv)
 
 			}
 			
-	
+
 	/*
 	//testing. drawing a square in each cell
 	 int symbol_size = 1; 
@@ -109,7 +146,7 @@ int main(int argc, char **argv)
 }
 */
 
-out_image -> WriteImage("test.tga");
+out_image -> WriteImage(out_filename);
 
 return 0;
 

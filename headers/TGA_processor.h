@@ -299,58 +299,73 @@ void TGAImage::WriteImage(string filename) {
 	palette_type = header[1];
 	image_type = header[2];
 
-	m_width = header[12] + 256 * header[13];
-	m_height = header[14] + 256 * header[15];
-
-	//errors
-	if((m_width <= 0) || (m_height <= 0))
+	if(header[12] < 0)//avoiding a glitch in certain files
 	{
-		cerr << "Error: wrong size" << endl;
-		file.close();
-		return false;
+		m_width = 256 * (header[13]+1) + header[12];
+	}
+	else
+	{
+		m_width = header[12] + 256 * header[13];
 	}
 
-	if(image_type == IMAGE_TRUECOLOR)
+if(header[14] < 0)//avoiding a glitch in certain files
+{
+	m_height =  256 * (header[15]+1) + header[14] ;
+}
+else
+{
+	m_height = header[14] + 256 * header[15];
+}
+
+	//errors
+if((m_width <= 0) || (m_height <= 0))
+{
+	cerr << "Error: wrong size" << endl;
+	file.close();
+	return false;
+}
+
+if(image_type == IMAGE_TRUECOLOR)
+{
+	byteCount = header[16]/8;
+	long imageSize = m_height * m_width * byteCount ;
+	char data[imageSize+1];
+	file.seekg(18);
+	file.read(data,imageSize);
+	if(byteCount == 3)
 	{
-		byteCount = header[16]/8;
-		long imageSize = m_height * m_width * byteCount ;
-		char data[imageSize+1];
-		file.seekg(18);
-		file.read(data,imageSize);
+		m_pixels = new Colour_24[imageSize + imageSize/3];
+	}
+
+	if(byteCount == 4)
+	{
+		m_pixels = new Colour_24[imageSize];
+	}
+
+	for(int i = 0; i < imageSize; i++)
+	{
+
 		if(byteCount == 3)
 		{
-			m_pixels = new Colour_24[imageSize + imageSize/3];
-		}
-
-		if(byteCount == 4)
-		{
-			m_pixels = new Colour_24[imageSize];
-		}
-
-		for(int i = 0; i < imageSize; i++)
-		{
-
-			if(byteCount == 3)
+			switch(i%3)
 			{
-				switch(i%3)
+				case 0: 
 				{
-					case 0: 
-					{
-						m_pixels[i/3].b = data[i];
-					}
+					m_pixels[i/3].b = data[i];
+				}
 
-					case 1: 
-					{
-						m_pixels[i/3].g = data[i];
-					}
+				case 1: 
+				{
+					m_pixels[i/3].g = data[i];
+				}
 
-					case 2: 
-					{
-						m_pixels[i/3].r = data[i];
-						m_pixels[i/3].a = 255;
-					}
+				case 2: 
+				{
+					m_pixels[i/3].r = data[i];
+					m_pixels[i/3].a = 255;
+				}
 
-					default : break;
+				default : break;
 			}//switch
 		}
 
@@ -522,6 +537,6 @@ void TGAImage::type_palette2Truetype()
 
 int TGAImage::getPalettePixelIndex(int x, int y)
 {
-int index = palette_pixels[convert2dto1d(x,y)];
-return index;
+	int index = palette_pixels[convert2dto1d(x,y)];
+	return index;
 }
