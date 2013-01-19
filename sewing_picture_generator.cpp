@@ -12,6 +12,7 @@ using namespace std;
 int line_width = 1;
 int cell_size = 10;
 short thread_amount = 1;
+const Colour_24 null_color = {0,0,0,0};
 
 //////////////////////
 ////GLOBALS//////////
@@ -28,6 +29,8 @@ int n_cells_y;
 Colour_24 c;
 TGAImage *in_image;
 TGAImage *out_image;
+pthread_mutex_t the_mutex;
+
 
 int main(int argc, char **argv)
 {
@@ -88,10 +91,13 @@ int main(int argc, char **argv)
 	//Colour_24 c;
 	c.a = 255;
 	out_image = new TGAImage(out_width,out_height,IMAGE_TRUECOLOR);
+out_image -> setAllPixels(null_color);
 
 	pthread_t thread_id[thread_amount];
 
+	
 
+	pthread_mutex_init(&the_mutex,NULL);
 
 	for(int i=0; i<thread_amount ; i++)
 	{
@@ -189,14 +195,16 @@ int starty = 0;
 int endy =out_height;
 
 
-if(thread_amount == 1)
-{
+
+//if(thread_amount == 1)
+//{
 startx = 0;
 endx = out_width;
 starty = 0;
 endy =out_height;
-}
+//}
 
+/*
 if(thread_amount == 2)
 {
 startx = 0 + param * out_width/2;
@@ -213,29 +221,44 @@ endx = param/2 * out_width/2 + out_width/2;
 starty = param%2 * out_height/2;
 endy = param%2 *out_height/2 + out_height/2;
 }
+*/
 
 for(int i = startx ; i< endx ; i++)
 	for(int j = starty; j < endy ; j++)
 	{
+		
+		Colour_24 temp_test = (out_image -> getPixel(i,j));
+		if((temp_test.r == null_color.r) && (temp_test.g == null_color.g) &&(temp_test.b == null_color.b) &&(temp_test.a == null_color.a) &&
+			true)
+		{
 			//cerr << "tMile1.5" << endl;//debug
 		if(i%e<line_width)
 		{//draw gridline
 			c.r = 0; c.g = 0; c.b = 0;
 		//	cerr << "tMile1.6" << endl;//debug
+			pthread_mutex_lock(&the_mutex);
 			out_image -> setPixel(c,i,j);
+			pthread_mutex_unlock(&the_mutex);
 		//	cerr << "tMile1.7" << endl;//debug
 		}//if
 		else if(j%e<line_width)
 		{//draw gridline
 			c.r = 0; c.g = 0; c.b = 0;
+			pthread_mutex_lock(&the_mutex);
 			out_image -> setPixel(c,i,j);
+			pthread_mutex_unlock(&the_mutex);
 		}//if
 		else
 		{			
 			c = in_image -> getPixel(i/e,j/e)	;
+			pthread_mutex_lock(&the_mutex);
 			out_image -> setPixel(c,i,j);
+			pthread_mutex_unlock(&the_mutex);
 		}//else
 			//cerr << i << "\t" << j << "\t" << (int)c.r << "\t" << (int)c.g << "\t" << (int)c.b << endl;//debug
+		}
+		//else{cerr<<"test_else"<<endl;}
+		
 	}//for
 	//cerr << "Mile1" << endl;//debug
 	//c.r = 0; c.g = 255; c.b = 0; out_image -> drawSquare(c,0,0,4000,4000);//test
@@ -248,14 +271,16 @@ cFreetype symbols( "/usr/share/fonts/truetype/freefont/FreeSans.ttf",cell_size) 
 
 	//cerr << "Mile2" << endl;//debug
 
-if(thread_amount == 1)
-{
+//if(thread_amount == 1)
+//{
 startx = 0;
 endx = n_cells_x;
 starty = 0;
 endy =n_cells_y;
-}
+//}
 
+
+/*
 if(thread_amount == 2)
 {
 startx = 0 + param * n_cells_x/2;
@@ -272,6 +297,8 @@ endx = param/2 * n_cells_x/2 + n_cells_x/2;
 starty = param%2 * n_cells_y/2;
 endy = param%2 *n_cells_y/2 + n_cells_y/2;
 }
+*/
+
 
 	for(int k = startx; k< endx; k++)
 		for(int n = starty; n< endy; n++)
