@@ -1,5 +1,6 @@
 #include "headers/TGA_processor.h"
 #include <pthread.h>
+#include <sys/time.h>
 
 void* renderOutput(void *lp);
 
@@ -17,7 +18,7 @@ const Colour_24 null_color = {0,0,0,0};
 //////////////////////
 ////GLOBALS//////////
 /////////////////
-//all these were previously defined in main, but since multithreading support,
+//many of these were previously defined in main, but since multithreading support,
 //preliminary global definition is required
 string filename ;
 string out_filename;
@@ -29,12 +30,17 @@ int n_cells_y;
 Colour_24 c;
 TGAImage *in_image;
 TGAImage *out_image;
-pthread_mutex_t the_mutex;
+//ofstream *o;
+//pthread_mutex_t the_mutex;
+
 
 
 int main(int argc, char **argv)
 {
-	filename ;
+
+	time_t start_time, end_time; long elapsed_time;
+	time(&start_time);
+	
 	out_filename = "out_needlework.tga";
 	
 	for(int i=0;i<argc ;i++)//reading options
@@ -91,25 +97,27 @@ int main(int argc, char **argv)
 	//Colour_24 c;
 	c.a = 255;
 	out_image = new TGAImage(out_width,out_height,IMAGE_TRUECOLOR);
-out_image -> setAllPixels(null_color);
+	out_image -> setAllPixels(null_color);
 
 	pthread_t thread_id[thread_amount];
 
-	
+	//pthread_mutex_init(&the_mutex,NULL);
 
-	pthread_mutex_init(&the_mutex,NULL);
+//o = new ofstream(filename.c_str(), ios::out | ios::binary);
 
 	for(int i=0; i<thread_amount ; i++)
 	{
 		//int thread_param = thread_amount *100 + i;
 		pthread_create(&thread_id[i],0,&renderOutput,(void*)i);
-	cerr << "Mile1" << endl;//debug	
-	}
+	//cerr << "Mile1" << endl;//debug	
+}
 
-	for(int i=0; i<thread_amount ; i++)
-	{
-		pthread_join(thread_id[i],NULL);
-	}
+for(int i=0; i<thread_amount ; i++)
+{
+	pthread_join(thread_id[i],NULL);
+}
+
+//o -> close();
 
 //that is sent to separate thread
 /*
@@ -179,13 +187,17 @@ out_image -> setAllPixels(null_color);
 
 			out_image -> WriteImage(out_filename);
 
+			time(&end_time);
+			elapsed_time = end_time - start_time;
+			cout << "Elapsed  time : " << elapsed_time << " seconds." << endl;
+
 			return 0;
 
 }//main
 
 void* renderOutput(void *lp)
 {
-cerr << "tMile1" << endl;//debug
+cerr << "thread start lp: " << (int)lp << endl;//debug
 
 int param = (int)lp;
 cerr << "param: " << param << endl;//debug
@@ -198,12 +210,14 @@ int endy =out_height;
 
 //if(thread_amount == 1)
 //{
-startx = 0;
-endx = out_width;
+startx = 0 +  (float)param/(float)thread_amount * out_width;
+endx =  (float)(param+1)/(float)thread_amount * out_width;
 starty = 0;
 endy =out_height;
 //}
 
+//cerr << param << " startx: " << startx << endl;//debug
+//cerr << param << " endx: " << endx << endl;/debug
 /*
 if(thread_amount == 2)
 {
@@ -211,15 +225,15 @@ startx = 0 + param * out_width/2;
 endx = out_width/2 + param * out_width/2;
 starty = 0;
 endy = out_height;
-//if(param == 0){return 0;};//debug
+if(param == 0){return 0;};//debug
 }
 
 if(thread_amount == 4)
 {
 startx = param/2 * out_width/2;
 endx = param/2 * out_width/2 + out_width/2;
-starty = param%2 * out_height/2;
-endy = param%2 *out_height/2 + out_height/2;
+starty = 0;
+endy = out_height
 }
 */
 
@@ -228,41 +242,41 @@ for(int i = startx ; i< endx ; i++)
 	{
 		
 		Colour_24 temp_test = (out_image -> getPixel(i,j));
-		if((temp_test.r == null_color.r) && (temp_test.g == null_color.g) &&(temp_test.b == null_color.b) &&(temp_test.a == null_color.a) &&
+		if(  //(temp_test.r == null_color.r) && (temp_test.g == null_color.g) &&(temp_test.b == null_color.b) &&(temp_test.a == null_color.a) &&
 			true)
 		{
 			//cerr << "tMile1.5" << endl;//debug
-		if(i%e<line_width)
+			if(i%e<line_width)
 		{//draw gridline
 			c.r = 0; c.g = 0; c.b = 0;
 		//	cerr << "tMile1.6" << endl;//debug
-			pthread_mutex_lock(&the_mutex);
+			//pthread_mutex_lock(&the_mutex);
 			out_image -> setPixel(c,i,j);
-			pthread_mutex_unlock(&the_mutex);
+			//pthread_mutex_unlock(&the_mutex);
 		//	cerr << "tMile1.7" << endl;//debug
 		}//if
 		else if(j%e<line_width)
 		{//draw gridline
 			c.r = 0; c.g = 0; c.b = 0;
-			pthread_mutex_lock(&the_mutex);
+			//pthread_mutex_lock(&the_mutex);
 			out_image -> setPixel(c,i,j);
-			pthread_mutex_unlock(&the_mutex);
+			//pthread_mutex_unlock(&the_mutex);
 		}//if
 		else
 		{			
 			c = in_image -> getPixel(i/e,j/e)	;
-			pthread_mutex_lock(&the_mutex);
+			//pthread_mutex_lock(&the_mutex);
 			out_image -> setPixel(c,i,j);
-			pthread_mutex_unlock(&the_mutex);
+			//pthread_mutex_unlock(&the_mutex);
 		}//else
 			//cerr << i << "\t" << j << "\t" << (int)c.r << "\t" << (int)c.g << "\t" << (int)c.b << endl;//debug
-		}
+	}
 		//else{cerr<<"test_else"<<endl;}
-		
+
 	}//for
 	//cerr << "Mile1" << endl;//debug
 	//c.r = 0; c.g = 255; c.b = 0; out_image -> drawSquare(c,0,0,4000,4000);//test
-cerr << "tMile2" << endl;//debug
+//cerr << "tMile2" << endl;//debug
 
 	 //symbol drawing sequence
 cFreetype symbols( "/usr/share/fonts/truetype/freefont/FreeSans.ttf",cell_size) ;
@@ -273,8 +287,8 @@ cFreetype symbols( "/usr/share/fonts/truetype/freefont/FreeSans.ttf",cell_size) 
 
 //if(thread_amount == 1)
 //{
-startx = 0;
-endx = n_cells_x;
+startx = 0 +  (float)param/(float)thread_amount * n_cells_x;
+endx = (float)(param+1)/(float)thread_amount * n_cells_x;
 starty = 0;
 endy =n_cells_y;
 //}
@@ -300,37 +314,54 @@ endy = param%2 *n_cells_y/2 + n_cells_y/2;
 */
 
 
-	for(int k = startx; k< endx; k++)
-		for(int n = starty; n< endy; n++)
-		{
-			symbols.get_char_pixel_data(65 + (in_image -> getPalettePixelIndex(k, (in_image->m_height ) - 1 - n)));
-			c = in_image -> getPixel(k, (in_image->m_height ) - 1 - n);
+for(int k = startx; k< endx; k++)
+	for(int n = starty; n< endy; n++)
+	{
+		symbols.get_char_pixel_data(65 + (in_image -> getPalettePixelIndex(k, (in_image->m_height ) - 1 - n)));
+		c = in_image -> getPixel(k, (in_image->m_height ) - 1 - n);
 			//int lightness = 255;
-			int lightness = 0.3 * c.r + 0.59 * c.g + 0.11 * c.b;
+		int lightness = 0.3 * c.r + 0.59 * c.g + 0.11 * c.b;
 //int lightness = c.max_channel_value()/2 + c.min_channel_value()/2;
 //cerr << "c.r: " << c.r << "\t c.max_channel_value: " << c.max_channel_value() << "\t c.min_channel_value: " << c.min_channel_value() <<  "\t lightness: " << lightness << endl; //debug
-			if(lightness > 122)
-			{
-				c.r = 0; c.b = 0; c.g = 0;
-			}
-			else 
-			{
-				c.r = 255; c.g = 255; c.b = 255;
-			}
-
-			for(int i=0;i<symbols.rows;i++)
-				for(int j=0;j<symbols.width;j++)
-				{
-					unsigned char gray = symbols.buffer[i*symbols.width+j];
-					c.a = gray ;					
-					int x1 = line_width + e*k + j ; if(x1<0)x1=0; if(x1>=out_width)x1=(out_width-1);
-					int y1 = out_height - line_width - e * n - i ; if(y1<0)y1=0; if(y1>=out_height)x1=(out_height-1);
-					out_image -> blendPixel(c,x1, y1,BLEND_MODE_NORMAL);
-					//Colour_24 c_test = out_image -> getPixel(k,n); cerr << (int)c_test.a << endl;//debug
-				}
+		if(lightness > 122)
+		{
+			c.r = 0; c.b = 0; c.g = 0;
+		}
+		else 
+		{
+			c.r = 255; c.g = 255; c.b = 255;
 		}
 
+		for(int i=0;i<symbols.rows;i++)
+			for(int j=0;j<symbols.width;j++)
+			{
+				unsigned char gray = symbols.buffer[i*symbols.width+j];
+				c.a = gray ;					
+				int x1 = line_width + e*k + j ; 
+				if( (x1<0) || (x1>=out_width) )continue;
+				int y1 = out_height - line_width - e * n - i ; 
+				if( (y1<0) || (y1>=out_height) )continue;
+				out_image -> blendPixel(c,x1, y1,BLEND_MODE_NORMAL);
+					//Colour_24 c_test = out_image -> getPixel(k,n); cerr << (int)c_test.a << endl;//debug
+			}
+		}
 
-cerr << "thread lp: " << (int)lp << endl;//debug
+/*
+startx =0 + (float)param/(float)thread_amount * (out_image -> m_height) * (out_image -> m_width);
+endx = (float)(param+1)/(float)thread_amount * (out_image -> m_height) * (out_image -> m_width);
+
+		cerr << param << " startx: " << startx << endl;//debug
+		cerr << param << " endx: " << endx << endl;//debug
+
+
+
+		out_image -> WriteImagePartial(o,
+			startx,
+			endx,
+			!param);
+*/
+
+
+cerr << "thread end lp: " << (int)lp << endl;//debug
 return 0;
 }

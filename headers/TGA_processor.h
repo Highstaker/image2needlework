@@ -99,6 +99,9 @@ struct TGAImage
 	//Image output sequence
 	void WriteImage(string filename);
 
+	//Image output sequence,experimental, writes only part of image specified between start and end
+	void WriteImagePartial(string filename, int start,int end, bool header);
+
 	//General getters and setters
 
 	//void setWidth(short width);
@@ -269,6 +272,52 @@ void TGAImage::WriteImage(string filename) {
 
 	//Pixel data
 		for (int i=0;i<m_height*m_width;i++) 
+		{
+		o << m_pixels[i].b //Blue channel
+			<< m_pixels[i].g //Green channel
+			<< m_pixels[i].r //Red Channel
+			<< m_pixels[i].a //Alpha channel
+			;}   
+
+	//close the file
+			o.close();
+
+		}
+
+		void TGAImage::WriteImagePartial(string filename, int start,int end, bool header)
+		 {
+
+	if(image_type == IMAGE_PALETTE)
+		type_palette2Truetype();
+
+	//Error checking
+	if (m_width <= 0 || m_height <= 0)
+	{
+		cerr << "Error! Negative size!" << endl;
+		return;
+	}
+
+	ofstream o(filename.c_str(), ios::out | ios::binary);
+
+if(header)
+{
+	//Header
+	o << (char)0  //Zero identifier length
+		<< (char)0 // 0 - No color map; 1 - Color map present
+		<< (char)2 // 0 - Nothing ; 1 - Indexed ; 2 -TrueColor (24-bit) ; 3 - Monochrome; 9,10,11 - same as 1,2,3 but with RLE compression                        
+		<< (char)0 << (char)0 //Index of palette's first element
+		<< (char)0 << (char)0 //Amount of elements in palette 
+		<< (char)0 //Bits per palette's element (usually 15,16,24,32)
+		<< (char)0 << (char)0  //Absolute location of bottom-left corner by x(horizontal) axis
+		<< (char)0 << (char)0  //Absolute location of bottom-left corner by y(vertical) axis
+		<< (char)(m_width % 256) <<  (char)(m_width / 256) //Info on image width
+		<< (char)(m_height % 256) <<  (char)(m_height / 256) //Info on image height
+		<< (char)32 //Bits per pixel                        
+		<< (char)0;//Some descriptor, no idea.
+
+}
+	//Pixel data
+		for (int i=start;i<end;i++) 
 		{
 		o << m_pixels[i].b //Blue channel
 			<< m_pixels[i].g //Green channel
