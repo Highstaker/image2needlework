@@ -1,6 +1,6 @@
 struct Colour_16
 {
-	unsigned char r,g,b;   //Can be 0 - 255
+	unsigned char b,g,r;   //Can be 0 - 255
 
 	int max_channel_value()
 	{
@@ -25,7 +25,7 @@ struct Colour_16
 
 struct Colour_24
 {
-	unsigned char r,g,b,a;   //Can be 0 - 255
+	unsigned char b,g,r,a;   //Can be 0 - 255
 
 	int max_channel_value()
 	{

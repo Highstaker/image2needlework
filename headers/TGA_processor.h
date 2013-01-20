@@ -110,6 +110,8 @@ struct TGAImage
 	//Convert indexed image to truetype
 	void type_palette2Truetype();
 
+	Colour_24 *m_pixels;
+
 
 private:
 
@@ -117,7 +119,7 @@ private:
 	bool ReadImage(string filename);
 
 		//store the pixels
-	Colour_24 *m_pixels;
+	//Colour_24 *m_pixels;
 
 	Colour_24 *palette_data;
 	unsigned char *palette_pixels;
@@ -271,19 +273,23 @@ void TGAImage::WriteImage(string filename) {
 		<< (char)0;//Some descriptor, no idea.
 
 	//Pixel data
+		o.write((char*)m_pixels,m_width*m_height*4);
+		/*
 		for (int i=0;i<m_height*m_width;i++) 
 		{
 		o << m_pixels[i].b //Blue channel
 			<< m_pixels[i].g //Green channel
 			<< m_pixels[i].r //Red Channel
 			<< m_pixels[i].a //Alpha channel
-			;}   
+			;}  
+			*/ 
 
 	//close the file
 			o.close();
 
 		}
 
+/*
 		void TGAImage::WriteImagePartial(string filename, int start,int end, bool header)
 		 {
 
@@ -329,6 +335,8 @@ if(header)
 			o.close();
 
 		}
+
+*/
 
 //Image input sequence
 		bool TGAImage::ReadImage(string filename)
