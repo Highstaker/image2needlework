@@ -27,7 +27,7 @@ int out_height;
 int e;
 int n_cells_x;
 int n_cells_y;
-Colour_24 c;
+//Colour_24 cg;
 TGAImage *in_image;
 TGAImage *out_image;
 //ofstream *o;
@@ -95,7 +95,8 @@ int main(int argc, char **argv)
 	out_height = line_width + n_cells_y * e;
 
 	//Colour_24 c;
-	c.a = 255;
+	//c.a = 255;
+
 	out_image = new TGAImage(out_width,out_height,IMAGE_TRUECOLOR);
 	out_image -> setAllPixels(null_color);
 
@@ -199,6 +200,7 @@ void* renderOutput(void *lp)
 {
 cerr << "thread start lp: " << (int)lp << endl;//debug
 
+Colour_24 c;c.a = 255;
 int param = (int)lp;
 cerr << "param: " << param << endl;//debug
 int startx = 0;
@@ -206,22 +208,24 @@ int endx = out_width;
 int starty = 0;
 int endy =out_height;
 
-TGAImage *local_pixels = new TGAImage(out_width/thread_amount,out_height,IMAGE_TRUECOLOR);
+TGAImage *local_pixels = new TGAImage(out_width,out_height/thread_amount,IMAGE_TRUECOLOR);
 
 //if(thread_amount == 1)
 //{
-startx = 0 +  (float)param/(float)thread_amount * out_width;
-endx =  (float)(param+1)/(float)thread_amount * out_width;
+startx = 0;
+endx =  out_width;
 starty = 0;
-endy =out_height;
+endy = out_height/thread_amount;
 //startx = 0;
 //endx = local_pixels -> m_width;
 //starty = 0;
 //endy = local_pixels -> m_height;
 //}
 cerr << "mile0.1" <<endl;//debug
-//cerr << param << " startx: " << startx << endl;//debug
-//cerr << param << " endx: " << endx << endl;/debug
+cerr << param << " startx: " << startx << endl;//debug
+cerr << param << " endx: " << endx << endl;//debug
+cerr << param << " starty: " << starty << endl;//debug
+cerr << param << " endy: " << endy << endl;//debug
 /*
 if(thread_amount == 2)
 {
@@ -247,6 +251,7 @@ for(int i = startx ; i< endx ; i++)
 		//(local_pixels -> m_pixels[0]) = c;
 		//cerr << i << '\t' << j << '\t' << sizeof(local_pixels) << endl;//debug
 		//Colour_24 temp_test = (local_pixels -> getPixel(i,j));
+		//if(param){cerr << i << '\t' << j << '\t' << (int)c.r << '\t' << (int)c.g << '\t' << (int)c.b << '\t' << (int)c.a << '\t' << endl;}//debug
 		if(  //(temp_test.r == null_color.r) && (temp_test.g == null_color.g) &&(temp_test.b == null_color.b) &&(temp_test.a == null_color.a) &&
 			true)
 		{
@@ -256,7 +261,6 @@ for(int i = startx ; i< endx ; i++)
 			c.r = 0; c.g = 0; c.b = 0;
 		//	cerr << "tMile1.6" << endl;//debug
 			//pthread_mutex_lock(&the_mutex);
-
 			local_pixels -> setPixel(c,i,j);
 
 			//pthread_mutex_unlock(&the_mutex);
@@ -271,7 +275,7 @@ for(int i = startx ; i< endx ; i++)
 		}//if
 		else
 		{			
-			c = in_image -> getPixel(i/e,j/e)	;
+			c = in_image -> getPixel(i/e,(j + param * (local_pixels -> m_height))/e);
 			//pthread_mutex_lock(&the_mutex);
 			local_pixels -> setPixel(c,i,j);
 			//pthread_mutex_unlock(&the_mutex);
@@ -301,7 +305,7 @@ cFreetype symbols( "/usr/share/fonts/truetype/freefont/FreeSans.ttf",cell_size) 
 startx = 0 ;
 endx = n_cells_x;
 starty = 0;
-endy =n_cells_y;
+endy =n_cells_y / thread_amount;
 //}
 
 
@@ -324,15 +328,15 @@ endy = param%2 *n_cells_y/2 + n_cells_y/2;
 }
 */
 
-if(thread_amount == 1)//temporary, until I figure out how to make itwork with multithreading
+//if(thread_amount == 1)//temporary, until I figure out how to make itwork with multithreading
 {
 for(int k = startx; k< endx; k++)
 	for(int n = starty; n< endy; n++)
 	{
 		symbols.get_char_pixel_data(65 + (in_image -> getPalettePixelIndex(k, (in_image->m_height ) - 1 - n)));
 		//cerr << k << '\t' << n << endl;//debug
-		c = in_image -> getPixel(k, (in_image->m_height ) - 1 - n);
-
+		c = in_image -> getPixel(k, n + param * (local_pixels -> m_height));
+//if(!param)cerr << param << '\t' << (int)c.r <<endl;else return 0;//debug
 			//int lightness = 255;
 		int lightness = 0.3 * c.r + 0.59 * c.g + 0.11 * c.b;
 //int lightness = c.max_channel_value()/2 + c.min_channel_value()/2;
@@ -353,9 +357,9 @@ for(int k = startx; k< endx; k++)
 				unsigned char gray = symbols.buffer[i*symbols.width+j];
 				c.a = gray ;					
 				int x1 = line_width + e*k + j + e/4; 
-				if( (x1<0) || (x1>=out_width) )continue;
+				if( (x1<0) || (x1>=(local_pixels -> m_width)) )continue;
 				int y1 = out_height - line_width - e * n - i; 
-				if( (y1<0) || (y1>=out_height) )continue;
+				if( (y1<0) || (y1>=(local_pixels -> m_height)) )continue;
 				local_pixels -> blendPixel(c,x1, y1,BLEND_MODE_NORMAL);
 					//Colour_24 c_test = out_image -> getPixel(k,n); cerr << (int)c_test.a << endl;//debug
 			}
@@ -363,14 +367,18 @@ for(int k = startx; k< endx; k++)
 
 }
 
+//if(param){return 0;}//debug
+//local_pixels -> WriteImage("test.tga");//debug
+
  cerr << "mile1" << endl;//debug
-long size_of_local_chunk = sizeof(unsigned char) * out_width * out_height * 4 / thread_amount;
+//long size_of_local_chunk = out_width * out_height / thread_amount ;
+ long size_of_local_chunk = (local_pixels -> m_width) * (local_pixels -> m_height);
 
-//pthread_mutex_lock(&the_mutex);
- memcpy((void*)((out_image -> m_pixels) + (long)((size_of_local_chunk* param)/thread_amount)),(const void*)(local_pixels -> m_pixels),size_of_local_chunk) ;
- //pthread_mutex_unlock(&the_mutex);
+pthread_mutex_lock(&the_mutex);
+memcpy((void*)&(out_image -> m_pixels[size_of_local_chunk*param]),(const void*)(local_pixels -> m_pixels),size_of_local_chunk * sizeof(unsigned char) * 4 ) ;
+pthread_mutex_unlock(&the_mutex);
 
- cerr << "mile1.1" << endl;//debug
+cerr << "mile1.1" << endl;//debug
 
 delete[] (local_pixels -> m_pixels);
 //delete local_pixels;
