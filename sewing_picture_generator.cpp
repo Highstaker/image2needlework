@@ -335,7 +335,7 @@ for(int k = startx; k< endx; k++)
 	{
 		symbols.get_char_pixel_data(65 + (in_image -> getPalettePixelIndex(k, (in_image->m_height ) - 1 - n)));
 		//cerr << k << '\t' << n << endl;//debug
-		c = in_image -> getPixel(k, n + param * (local_pixels -> m_height));
+		c = in_image -> getPixel(k, (in_image->m_height ) - 1 - n);
 //if(!param)cerr << param << '\t' << (int)c.r <<endl;else return 0;//debug
 			//int lightness = 255;
 		int lightness = 0.3 * c.r + 0.59 * c.g + 0.11 * c.b;
